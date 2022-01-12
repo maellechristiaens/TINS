@@ -19,7 +19,7 @@ import bk.signal
 import matplotlib as mpl
 mpl.rcParams["svg.fonttype"] = "none"
 
-
+_________________________________________________________________________________________________________________________
 
 def iterate_over_sessions(function): 
     '''
@@ -84,7 +84,34 @@ def iterate_over_sessions(function):
 
     return output_dict, outputs
 
+________________________________________________________________________________________________________________________
 
+
+def plot_synchrony_over_time_transitions(transitions, mean_sync, rem_to_sws=True):
+    '''
+    MC 15/12/21
+    This function draws the synchrony over time around the transitions
+    TO CONTINUE
+    Inputs:
+        transitions: the timing of the transitions 
+        mean_sync: the mean of synchrony over time 
+        rem_to_sws: if we look at rem to sws transitions or sws to rem transitions (by default: rem_to_sws)
+    Output:
+    A figure with the synchrony over time drawn
+    '''
+    means =[]
+    fig, ax = plt.subplots()
+    for i  in transitions_rem_sws:
+        interval = nts.IntervalSet(i-20_000_000, i+ 40_000_000, time_units='us')
+        m = mean_sync_pyr_bla.restrict(interval).values
+        means.append(m)
+        plt.plot(m, color = 'grey', alpha = 0.3)
+    a = mpatches.Rectangle((0,0), 20, 0.3, facecolor = 'orange', alpha = 0.5)
+    ax.add_patch(a)
+    mean = np.mean(means, axis=0)
+    plt.plot(mean, color = 'r', linewidth=4)
+
+_____________________________________________________________________________________________________________________________
 
 
 def mean_synchrony(neurons, asymetry=False, neurons2=False, window=1, smallbins=0.1, shift=1):
@@ -127,7 +154,7 @@ def mean_synchrony(neurons, asymetry=False, neurons2=False, window=1, smallbins=
         toreturn = nts.Tsd(t[:-1], mean_sync, time_units='s') #create a neuroseries frame with the means of synchrony
     return toreturn
 
-
+________________________________________________________________________________________________________________________________________
 
 
 def mean_synchrony_nan(neurons, asymetry=False, neurons2=False, window=2, smallbins=0.1, shift=1):
@@ -168,7 +195,7 @@ def mean_synchrony_nan(neurons, asymetry=False, neurons2=False, window=2, smallb
     toreturn = nts.Tsd(t[:-1], mean_sync, time_units='s') #create a neuroseries frame with the means of synchrony
     return toreturn
 
-
+___________________________________________________________________________________________________________________________________
 
 
 def mean_firing_rate(neurons, window=2, smallbins=0.1, shift=1):
@@ -202,7 +229,7 @@ def mean_firing_rate(neurons, window=2, smallbins=0.1, shift=1):
         toreturn = nts.Tsd(t[:-1], mean_fr, time_units='s') #create a neuroseries frame with the means of firing rate
     return toreturn
 
-
+____________________________________________________________________________________________________________________________________
 
 def pourcent_active_neurons(neurons, window=1):
     '''
@@ -222,7 +249,7 @@ def pourcent_active_neurons(neurons, window=1):
     toreturn = nts.Tsd(t, pourcent_active, time_units='s') #create a neuroseries frame with the pourcentages
     return toreturn
 
-
+______________________________________________________________________________________________________________________________________
 
 def normalization(neurons):
     '''
@@ -240,7 +267,7 @@ def normalization(neurons):
     toreturn = nts.Tsd(t, toreturn, time_units = 's') #create the tsd
     return toreturn
     
-    
+____________________________________________________________________________________________________________________________   
     
 
 def synchrony_around_transitions(transitions, mean_sync):
@@ -287,32 +314,7 @@ def synchrony_around_transitions(transitions, mean_sync):
     trans = pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in trans.items() ]))
     return trans
 
-
-
-def plot_synchrony_over_time_transitions(transitions, mean_sync, rem_to_sws=True):
-    '''
-    MC 15/12/21
-    This function draws the synchrony over time around the transitions
-    TO CONTINUE
-    Inputs:
-        transitions: the timing of the transitions 
-        mean_sync: the mean of synchrony over time 
-        rem_to_sws: if we look at rem to sws transitions or sws to rem transitions (by default: rem_to_sws)
-    Output:
-    A figure with the synchrony over time drawn
-    '''
-    means =[]
-    fig, ax = plt.subplots()
-    for i  in transitions_rem_sws:
-        interval = nts.IntervalSet(i-20_000_000, i+ 40_000_000, time_units='us')
-        m = mean_sync_pyr_bla.restrict(interval).values
-        means.append(m)
-        plt.plot(m, color = 'grey', alpha = 0.3)
-    a = mpatches.Rectangle((0,0), 20, 0.3, facecolor = 'orange', alpha = 0.5)
-    ax.add_patch(a)
-    mean = np.mean(means, axis=0)
-    plt.plot(mean, color = 'r', linewidth=4)
-    
+_______________________________________________________________________________________________________________________________
     
 def corr_coeff_without_nan(var1, var2):
     '''
@@ -338,7 +340,7 @@ def corr_coeff_without_nan(var1, var2):
     
     return var1, var2, mask
 
-
+_________________________________________________________________________________________________________________________________
 
 def get_first_and_last_intervals(states):
     '''
@@ -359,7 +361,7 @@ def get_first_and_last_intervals(states):
     last = nts.IntervalSet(last)
     return first, last
 
-
+________________________________________________________________________________________________________________________
 
 def get_extended_sleep(states,sleep_th,wake_th):
     '''
@@ -377,6 +379,43 @@ def get_extended_sleep(states,sleep_th,wake_th):
     ext_sleep = ext_sleep[ext_sleep.duration(time_units='s')>sleep_th].reset_index(drop = True)
     return ext_sleep
 
+________________________________________________________________________________________________________________________
+
+def transitions_rem_sws(path):
+    '''
+    MC 10/01/22
+    Inputs:
+    
+    Outputs:
+    '''
+    
+    mean = []
+    nb_sessions_considered = 0
+    nb_transitions = 0 
+    fig, ax = plt.subplots()
+    means =[]
+
+    nb_sessions_considered += 1
+    mean_sync_pyr_bla = mean_synchrony(neurons_pyr_bla, window=1, smallbins=0.1, shift=1)
+    mean_sync_pyr_bla_s = bk.compute.nts_smooth(mean_sync_pyr_bla, 100,50)
+
+    transitions = bk.compute.transitions_times(states)
+    transitions_rem_sws = transitions[1][('Rem', 'sws')].index.values
+
+    nb_transitions += len(transitions_rem_sws)
+    for i  in transitions_rem_sws:
+        interval = nts.IntervalSet(i-20_000_000, i+ 40_000_000, time_units='us')
+        m = mean_sync_pyr_bla.restrict(interval).values
+        means.append(m)
+        mean.append(m)
+    #plt.plot(m, color = 'grey', alpha = 0.3)
+    m = (np.nanmean(means, axis=0))
+    plt.plot(m, color = 'grey')
+    a = mpatches.Rectangle((0,0), 20, 0.5, facecolor = 'orange', alpha = 0.5)
+    ax.add_patch(a)
+    overall_mean = (np.nanmean(mean, axis=0))
+    plt.plot(overall_mean, color = 'red', linewidth = 3)
+    plt.title(f'transitions sws to rem, rat 08, #Transitions = {nb_transitions}, #Sessions = {nb_sessions_considered}')
 
 
 
